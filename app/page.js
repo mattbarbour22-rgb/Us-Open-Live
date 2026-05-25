@@ -8,15 +8,6 @@ import { tournamentConfig, poolEntries } from './lib/tournament';
 // Leave empty before the tournament. After a round/cut, paste locked baseline ranks here if you want arrows.
 const movementBaselineRanks = {};
 
-const fallbackPlayers = [
-  { name: 'Rory McIlroy', position: 1, positionLabel: 'T1', score: 0, today: '', thru: 'Tee time', teeTime: '8:00 AM' },
-  { name: 'Scottie Scheffler', position: 1, positionLabel: 'T1', score: 0, today: '', thru: 'Tee time', teeTime: '8:10 AM' },
-  { name: 'Xander Schauffele', position: 1, positionLabel: 'T1', score: 0, today: '', thru: 'Tee time', teeTime: '8:20 AM' },
-  { name: 'Ludvig Åberg', position: 1, positionLabel: 'T1', score: 0, today: '', thru: 'Tee time', teeTime: '8:30 AM' },
-  { name: 'Jon Rahm', position: 1, positionLabel: 'T1', score: 0, today: '', thru: 'Tee time', teeTime: '8:40 AM' },
-  { name: 'Justin Thomas', position: 1, positionLabel: 'T1', score: 0, today: '', thru: 'Tee time', teeTime: '8:50 AM' },
-];
-
 function simplifyName(name = '') {
   return String(name)
     .normalize('NFD')
@@ -218,7 +209,7 @@ function formatTeeTimeDisplay(teeTime, timezone = tournamentConfig.tournamentTim
       timeZone: 'Pacific/Auckland'
     }).format(utc);
 
-    return `${teeTime} / ${nzTime} NZ`;
+    return `${nzTime} NZ`;
   } catch {
     return teeTime;
   }
@@ -505,19 +496,21 @@ useEffect(() => {
 const players = useMemo(
   () =>
     addPositionLabels(
-      apiState.players?.length ? apiState.players : fallbackPlayers
+      apiState.players || []
     ),
   [apiState]
 );
 
 const pool = useMemo(() => {
+  if (!players.length) return [];
+
   return evaluatePool(poolEntries, players, movementRanks);
 }, [players, movementRanks]);
 
 // Public page is read-only. Round-move baselines are saved from the admin route only.
 
 
-const leader = pool[0];
+const leader = pool.length ? pool[0] : null;
 
 const poolLeaders = pool.filter(
   p => p.numericRank === pool[0]?.numericRank && !p.eliminated
@@ -570,13 +563,13 @@ const eliminatedCount = pool.filter(p => p.eliminated).length;
         <section className={`panel ${golfExpanded ? 'expanded' : ''}`}>
           <div className="panel-title">U.S. Open Live Leaderboard</div>
           <table>
-            <thead><tr><th>Pos</th><th>Player</th><th>Today</th><th>Thru</th><th>Total</th></tr></thead>
+            <thead><tr><th>Pos</th><th>Player</th><th>Total</th><th>Thru</th><th>Today</th></tr></thead>
             <tbody>
               {players.map((p, idx) => (
                 <tr key={`${p.name}-${idx}`} className={idx >= 14 ? 'hidden-row' : ''}>
-                  <td>{posLabel(p)}</td><td className="player">{p.name}</td><td className="red">{scoreLabel(p.today)}</td>
+                  <td>{posLabel(p)}</td><td className="player">{p.name}</td><td className="red">{scoreLabel(p.score)}</td>
                   <td>{p.teeTime && (!p.thru || String(p.thru).toLowerCase().includes('tee')) ? formatTeeTimeDisplay(p.teeTime) : (p.thru || '—')}</td>
-                  <td className="red">{scoreLabel(p.score)}</td>
+                  <td className="red">{scoreLabel(p.today)}</td>
                 </tr>
               ))}
             </tbody>
