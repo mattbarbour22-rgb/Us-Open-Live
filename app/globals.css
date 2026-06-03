@@ -50,7 +50,13 @@ tr:nth-child(even) td { background: #f8fafc; }
 .footer-btn:hover { background: #0c2546; }
 .hidden-row { display: none; }
 .expanded .hidden-row { display: table-row; }
-.leader-box { padding: 26px; background: linear-gradient(135deg,#fff,#f5efe2); }
+.leader-box {
+  padding: 26px;
+  background: rgba(10, 20, 35, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.15);
+}
 .big { font-size: 48px; font-weight: 950; color: var(--navy); line-height: 1; }
 .reason { margin-top: 12px; font-size: 19px; line-height: 1.45; color: #374151; }
 .leader-updated { margin-top: 18px; font-size: 15px; color: #4b5563; line-height: 1.45; font-weight: 700; }
