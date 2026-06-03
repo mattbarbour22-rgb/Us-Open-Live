@@ -223,43 +223,6 @@ function sortPlayers(players) {
       (p.thru && !String(p.thru).toLowerCase().includes('tee'))
   );
 
-  const playersOnCourse = players.some(p => {
-  const thru = String(p.thru || '').trim().toUpperCase();
-
-  return (
-    thru &&
-    thru !== 'F' &&
-    thru !== 'F*' &&
-    thru !== 'MC' &&
-    thru !== 'CUT' &&
-    thru !== 'WD' &&
-    !thru.includes('TEE')
-  );
-});
-
-const allFinished =
-  players.length > 0 &&
-  players.every(p => {
-    const thru = String(p.thru || '').trim().toUpperCase();
-    const label = String(p.positionLabel || '').trim().toUpperCase();
-
-    return (
-      thru === 'F' ||
-      thru === 'F*' ||
-      thru === 'MC' ||
-      thru === 'CUT' ||
-      thru === 'WD' ||
-      label === 'MC' ||
-      label === 'CUT'
-    );
-  });
-
-const liveStatusLabel = playersOnCourse
-  ? 'LIVE'
-  : allFinished
-    ? 'COMPLETE'
-    : 'READY';
-
   // Before tournament starts → tee time order
   if (!tournamentStarted) {
     return [...players].sort((a, b) => {
@@ -565,6 +528,45 @@ const updatedText = apiState.updatedAt
   : 'Waiting for scores';
 
 const tournamentStarted = players.some(p => p.position < 999);
+
+const playersOnCourse = players.some(p => {
+  const thru = String(p.thru || '').trim().toUpperCase();
+
+  return (
+    thru &&
+    thru !== 'F' &&
+    thru !== 'F*' &&
+    thru !== 'MC' &&
+    thru !== 'CUT' &&
+    thru !== 'WD' &&
+    thru !== '-' &&
+    !thru.includes('TEE')
+  );
+});
+
+const allFinished =
+  players.length > 0 &&
+  players.every(p => {
+    const thru = String(p.thru || '').trim().toUpperCase();
+    const label = String(p.positionLabel || '').trim().toUpperCase();
+
+    return (
+      thru === 'F' ||
+      thru === 'F*' ||
+      thru === 'MC' ||
+      thru === 'CUT' ||
+      thru === 'WD' ||
+      label === 'MC' ||
+      label === 'CUT' ||
+      label === 'WD'
+    );
+  });
+
+const liveStatusLabel = playersOnCourse
+  ? 'LIVE'
+  : allFinished
+    ? 'COMPLETE'
+    : 'READY';
 
 const golfLeaderNames = tournamentStarted
   ? players
