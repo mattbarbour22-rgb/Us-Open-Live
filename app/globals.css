@@ -85,3 +85,52 @@ tr:nth-child(even) td { background: #f8fafc; }
   .stat-row { grid-template-columns: 1fr; }
   td, th { font-size: 12px; padding: 9px; }
 }
+
+
+
+/* ADD THIS TO YOUR EXISTING globals.css */
+
+/* Keep normal white panels */
+.panel {
+  background: rgba(255,255,255,.97);
+}
+
+/* Make ONLY the Projected Pool Leader panel glass */
+.summary-panel {
+  background: rgba(6,20,38,0.25) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Remove white box inside */
+.leader-box {
+  padding: 26px;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Glass stat cards */
+.stat-row div {
+  background: rgba(6,20,38,0.55) !important;
+  border: 1px solid rgba(255,255,255,0.20) !important;
+  color: white;
+}
+
+.reason,
+.leader-updated {
+  color: white;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
