@@ -223,6 +223,43 @@ function sortPlayers(players) {
       (p.thru && !String(p.thru).toLowerCase().includes('tee'))
   );
 
+  const playersOnCourse = players.some(p => {
+  const thru = String(p.thru || '').trim().toUpperCase();
+
+  return (
+    thru &&
+    thru !== 'F' &&
+    thru !== 'F*' &&
+    thru !== 'MC' &&
+    thru !== 'CUT' &&
+    thru !== 'WD' &&
+    !thru.includes('TEE')
+  );
+});
+
+const allFinished =
+  players.length > 0 &&
+  players.every(p => {
+    const thru = String(p.thru || '').trim().toUpperCase();
+    const label = String(p.positionLabel || '').trim().toUpperCase();
+
+    return (
+      thru === 'F' ||
+      thru === 'F*' ||
+      thru === 'MC' ||
+      thru === 'CUT' ||
+      thru === 'WD' ||
+      label === 'MC' ||
+      label === 'CUT'
+    );
+  });
+
+const liveStatusLabel = playersOnCourse
+  ? 'LIVE'
+  : allFinished
+    ? 'COMPLETE'
+    : 'READY';
+
   // Before tournament starts → tee time order
   if (!tournamentStarted) {
     return [...players].sort((a, b) => {
@@ -553,7 +590,10 @@ const eliminatedCount = pool.filter(p => p.eliminated).length;
           <div className="eyebrow">{tournamentConfig.majorLabel}</div>
           <h2>{tournamentConfig.title}</h2>
           <div className="subtitle">{tournamentConfig.venue} • {tournamentConfig.location} • {tournamentConfig.dates}</div>
-          <div className="livebar"><div className="live">{apiState.mode === 'live' ? 'LIVE' : 'READY'}</div><div className="updated">{updatedText}</div></div>
+          <div className="livebar">
+  <div className="live">{liveStatusLabel}</div>
+  <div className="updated">{updatedText}</div>
+</div>
         </div>
       </div>
 
