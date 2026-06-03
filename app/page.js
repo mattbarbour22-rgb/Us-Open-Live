@@ -527,7 +527,7 @@ const updatedText = apiState.updatedAt
     )} min ago`
   : 'Waiting for scores';
 
-const tournamentStarted = players.some(p => p.position < 999);
+const tournamentStarted = playersOnCourse || allFinished;
 
 const playersOnCourse = players.some(p => {
   const thru = String(p.thru || '').trim().toUpperCase();
