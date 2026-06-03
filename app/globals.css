@@ -121,7 +121,16 @@ tr:nth-child(even) td { background: #f8fafc; }
   color: white;
 }
 
+.stat-row strong {
+  color: #ffffff !important;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+}
 
+.stat-row span {
+  color: #ffffff !important;
+  opacity: 1 !important;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+}
 
 
 
