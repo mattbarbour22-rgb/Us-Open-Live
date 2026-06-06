@@ -512,11 +512,11 @@ export async function GET(req) {
     const pool = evaluatePool(poolEntries, players, existing?.previous_ranks || {});
     const currentRanks = {};
 
-    pool.forEach(entry => {
-      if (!entry.eliminated && entry.numericRank) {
-        currentRanks[entry.player] = entry.numericRank;
-      }
-    });
+pool.forEach(entry => {
+  if (!entry.eliminated && entry.numericRank) {
+    currentRanks[String(entry.player).trim()] = entry.numericRank;
+  }
+});
 
     const { error } = await supabase
       .from('tournament_state')
