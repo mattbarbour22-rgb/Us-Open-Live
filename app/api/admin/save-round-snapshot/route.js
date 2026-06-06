@@ -1,6 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 import { poolEntries, tournamentConfig } from '../../../lib/tournament';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const TOURNAMENT_STATE_ID = process.env.TOURNAMENT_STATE_ID || '2026-us-open';
 
 function getSupabase() {
@@ -322,18 +325,21 @@ function comparePickSets(a, b) {
 function isDominated(entry, allEntries) {
   const livePicks = entry.sortedPicks.filter(isLivePick);
 
-  // Current rule from PGA Championship: anyone with 3 live picks stays alive.
-  if (livePicks.length === 3) return false;
   if (livePicks.length === 0) return true;
+  if (livePicks.length === 3) return false;
 
-  return livePicks.every(winner => {
-    return allEntries.some(other => {
-      if (other.player === entry.player) return false;
-      const otherLive = other.sortedPicks.filter(isLivePick);
-      const otherHasWinner = otherLive.some(p => keyName(p.name) === keyName(winner.name));
-      if (!otherHasWinner) return false;
-      return comparePickSets(otherLive, livePicks) < 0;
-    });
+  return allEntries.some(other => {
+    if (other.player === entry.player) return false;
+
+    const otherLive = other.sortedPicks.filter(isLivePick);
+
+    const coversAllLivePicks = livePicks.every(lp =>
+      otherLive.some(op => keyName(op.name) === keyName(lp.name))
+    );
+
+    if (!coversAllLivePicks) return false;
+
+    return comparePickSets(other.sortedPicks, entry.sortedPicks) < 0;
   });
 }
 
@@ -411,7 +417,7 @@ function evaluatePool(entries, players, previousRanks) {
 
     const livePicks = entry.sortedPicks.filter(isLivePick);
 
-    let eliminationReason = 'ALL MC';
+    let eliminationReason = livePicks.length === 0 ? 'ALL MC' : 'COVERED';
 
     if (livePicks.length > 0) {
 
@@ -420,9 +426,13 @@ function evaluatePool(entries, players, previousRanks) {
 
         const otherLive = other.sortedPicks.filter(isLivePick);
 
-        return livePicks.every(lp =>
+        const coversAllLivePicks = livePicks.every(lp =>
           otherLive.some(op => keyName(op.name) === keyName(lp.name))
-        ) && comparePickSets(otherLive, livePicks) < 0;
+        );
+
+        if (!coversAllLivePicks) return false;
+
+        return comparePickSets(other.sortedPicks, entry.sortedPicks) < 0;
       });
 
       if (coveringEntry) {
@@ -468,7 +478,7 @@ export async function GET(req) {
 
   try {
     const origin = url.origin;
-    const leaderboardRes = await fetch(`${origin}/api/leaderboard`);
+    const leaderboardRes = await fetch(`${origin}/api/leaderboard`, { cache: 'no-store' });
     const leaderboard = await leaderboardRes.json();
 
     const players = addPositionLabels(leaderboard.players || []);
@@ -522,7 +532,7 @@ pool.forEach(entry => {
       .from('tournament_state')
       .upsert({
         id: TOURNAMENT_STATE_ID,
-        tournament_name: tournamentConfig.title || '2026 U.S. Open',
+        tournament_name: tournamentConfig.title || TOURNAMENT_STATE_ID,
         previous_ranks: currentRanks,
         current_ranks: currentRanks,
         locked_eliminated: existing?.locked_eliminated || [],
