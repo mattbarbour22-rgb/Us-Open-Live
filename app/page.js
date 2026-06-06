@@ -354,7 +354,7 @@ function rankEntries(entries, hasRealScores, previousRanks = {}) {
       : 1;
 
     const rankLabel = tieCount > 1 ? `T${currentRank}` : String(currentRank);
-    const prev = previousRanks?.[entry.player];
+    const prev = previousRanks?.[String(entry.player).trim()];
     let move = '—', moveClass = 'move-same';
 
     if (prev && hasRealScores) {
