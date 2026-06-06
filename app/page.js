@@ -485,7 +485,7 @@ useEffect(() => {
     try {
       const data = await fetch('/api/pool-state').then(r => r.json());
 
-      setMovementRanks(data.previous_ranks || {});
+setMovementRanks(data.current_ranks || {});
       setPoolStateLoaded(true);
     } catch {
       setMovementRanks({});
