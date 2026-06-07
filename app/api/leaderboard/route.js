@@ -141,17 +141,27 @@ export async function GET() {
       ? raw.map(normalize).filter(p => p.name)
       : [];
 
-   return Response.json({
-  mode: players.length ? 'live' : 'no-players',
-  status: payload?.status || '',
-  roundStatus: payload?.roundStatus || '',
-  roundId: payload?.roundId || '',
-  requestUrl: url,
-  updatedAt: new Date().toISOString(),
-  players,
-  rawKeys: Object.keys(payload || {}),
-  rawPreview: players.length ? undefined : payload
-});
+    let mode = 'ready';
+
+    if (String(payload?.roundStatus || '').toLowerCase() === 'suspended') {
+      mode = 'suspended';
+    } else if (players.length) {
+      mode = 'live';
+    } else {
+      mode = 'no-players';
+    }
+
+    return Response.json({
+      mode,
+      status: payload?.status || '',
+      roundStatus: payload?.roundStatus || '',
+      roundId: payload?.roundId || '',
+      requestUrl: url,
+      updatedAt: new Date().toISOString(),
+      players,
+      rawKeys: Object.keys(payload || {}),
+      rawPreview: players.length ? undefined : payload
+    });
   } catch (err) {
     return Response.json({
       mode: 'api-error',
