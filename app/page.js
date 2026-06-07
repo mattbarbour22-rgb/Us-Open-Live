@@ -412,7 +412,7 @@ function evaluatePool(entries, players, previousRanks) {
 
     const livePicks = entry.sortedPicks.filter(isLivePick);
 
-    let eliminationReason = livePicks.length === 0 ? 'ALL MC' : 'COVERED';
+    let eliminationReason = 'ALL MC';
 
     if (livePicks.length > 0) {
 
@@ -421,13 +421,9 @@ function evaluatePool(entries, players, previousRanks) {
 
         const otherLive = other.sortedPicks.filter(isLivePick);
 
-        const coversAllLivePicks = livePicks.every(lp =>
+        return livePicks.every(lp =>
           otherLive.some(op => keyName(op.name) === keyName(lp.name))
-        );
-
-        if (!coversAllLivePicks) return false;
-
-        return comparePickSets(other.sortedPicks, entry.sortedPicks) < 0;
+        ) && comparePickSets(otherLive, livePicks) < 0;
       });
 
       if (coveringEntry) {
@@ -463,7 +459,7 @@ const [poolStateLoaded, setPoolStateLoaded] = useState(false);
 
 async function loadLeaderboard() {
   try {
-    const res = await fetch('/api/leaderboard', { cache: 'no-store' });
+    const res = await fetch('/api/leaderboard');
     const data = await res.json();
     setApiState(data);
   } catch (err) {
@@ -487,9 +483,9 @@ useEffect(() => {
 useEffect(() => {
   async function loadPoolState() {
     try {
-      const data = await fetch('/api/pool-state', { cache: 'no-store' }).then(r => r.json());
+      const data = await fetch('/api/pool-state').then(r => r.json());
 
-setMovementRanks(data.current_ranks || data.previous_ranks || {});
+setMovementRanks(data.current_ranks || {});
       setPoolStateLoaded(true);
     } catch {
       setMovementRanks({});
@@ -569,11 +565,14 @@ const allFinished =
     );
   });
 
-const liveStatusLabel = playersOnCourse
-  ? 'LIVE'
-  : allFinished
-    ? 'COMPLETE'
-    : 'READY';
+const liveStatusLabel =
+  apiState.mode === 'suspended'
+    ? 'SUSPENDED'
+    : playersOnCourse
+      ? 'LIVE'
+      : allFinished
+        ? 'COMPLETE'
+        : 'READY';
 
 const golfLeaderNames = tournamentStarted
   ? players
