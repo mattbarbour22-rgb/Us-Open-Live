@@ -85,6 +85,14 @@ function normalize(p) {
   };
 }
 
+function roundIdNumber(roundId) {
+  if (roundId && typeof roundId === 'object' && '$numberInt' in roundId) {
+    return Number(roundId.$numberInt);
+  }
+
+  return Number(roundId);
+}
+
 export async function GET() {
   const key = process.env.SLASH_GOLF_API_KEY;
   const host = process.env.SLASH_GOLF_API_HOST || 'live-golf-data.p.rapidapi.com';
@@ -146,9 +154,18 @@ export async function GET() {
       payload?.data?.playoff ||
       null;
 
+    const currentRoundId = roundIdNumber(payload?.roundId);
+    const leaders = players.filter(p => Number(p.position) === 1);
+
     let mode = 'ready';
 
-    if (playoff) {
+    if (
+      playoff &&
+      currentRoundId === 4 &&
+      leaders.length > 1 &&
+      String(payload?.status || '').toLowerCase() !== 'official' &&
+      String(payload?.roundStatus || '').toLowerCase() !== 'official'
+    ) {
       mode = 'playoff';
     } else if (String(payload?.roundStatus || '').toLowerCase() === 'suspended') {
       mode = 'suspended';
