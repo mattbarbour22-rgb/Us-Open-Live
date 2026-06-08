@@ -566,13 +566,17 @@ const allFinished =
   });
 
 const liveStatusLabel =
-  apiState.mode === 'suspended'
-    ? 'SUSPENDED'
-    : playersOnCourse
-      ? 'LIVE'
-      : allFinished
+  apiState.mode === 'playoff'
+    ? 'PLAYOFF'
+    : apiState.mode === 'suspended'
+      ? 'SUSPENDED'
+      : apiState.mode === 'complete'
         ? 'COMPLETE'
-        : 'READY';
+        : playersOnCourse
+          ? 'LIVE'
+          : allFinished
+            ? 'COMPLETE'
+            : 'READY';
 
 const golfLeaderNames = tournamentStarted
   ? players
