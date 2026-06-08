@@ -141,10 +141,22 @@ export async function GET() {
       ? raw.map(normalize).filter(p => p.name)
       : [];
 
+    const playoff =
+      payload?.playoff ||
+      payload?.data?.playoff ||
+      null;
+
     let mode = 'ready';
 
-    if (String(payload?.roundStatus || '').toLowerCase() === 'suspended') {
+    if (playoff) {
+      mode = 'playoff';
+    } else if (String(payload?.roundStatus || '').toLowerCase() === 'suspended') {
       mode = 'suspended';
+    } else if (
+      String(payload?.status || '').toLowerCase() === 'official' ||
+      String(payload?.roundStatus || '').toLowerCase() === 'official'
+    ) {
+      mode = 'complete';
     } else if (players.length) {
       mode = 'live';
     } else {
@@ -156,6 +168,7 @@ export async function GET() {
       status: payload?.status || '',
       roundStatus: payload?.roundStatus || '',
       roundId: payload?.roundId || '',
+      playoff,
       requestUrl: url,
       updatedAt: new Date().toISOString(),
       players,
