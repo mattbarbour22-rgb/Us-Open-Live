@@ -675,7 +675,7 @@ const eliminatedCount = pool.filter(p => p.eliminated).length;
         </div>
       </div>
 
-      <div className="note">Live rankings are decided by best current golf position, then next best and third pick. {tournamentConfig.jackpotRule}</div>
+      <div className="note">Live rankings are decided by best current golf position, then next best and third pick. Final results are preliminary and must be verified by Jonesy. </div>
     </main>
   );
 }
