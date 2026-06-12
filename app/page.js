@@ -591,17 +591,13 @@ const eliminatedCount = pool.filter(p => p.eliminated).length;
           <div className="subtitle">{tournamentConfig.venue} • {tournamentConfig.location} • {tournamentConfig.dates}</div>
           <div className="livebar">
   <div className="live">
-    {apiState.mode === 'suspended'
-  ? 'SUSPENDED'
-  : apiState.mode === 'playoff'
-  ? 'PLAYOFF'
-  : apiState.mode === 'complete'
-  ? 'COMPLETE'
-  : allFinished && Number(apiState.roundId?.$numberInt || apiState.roundId) < 4
-  ? 'BREAK'
-  : playersOnCourse
-  ? 'LIVE'
-  : 'READY'}
+    {apiState.mode === 'live'
+      ? 'LIVE'
+      : apiState.mode === 'complete'
+      ? 'COMPLETE'
+      : apiState.mode === 'suspended'
+      ? 'SUSPENDED'
+      : 'READY'}
   </div>
   <div className="updated">{updatedText}</div>
 </div>
