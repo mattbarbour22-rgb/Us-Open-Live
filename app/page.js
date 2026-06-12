@@ -592,7 +592,18 @@ const eliminatedCount = pool.filter(p => p.eliminated).length;
           <div className="eyebrow">{tournamentConfig.majorLabel}</div>
           <h2>{tournamentConfig.title}</h2>
           <div className="subtitle">{tournamentConfig.venue} • {tournamentConfig.location} • {tournamentConfig.dates}</div>
-          <div className="livebar"><div className="live">{apiState.mode === 'live' ? 'LIVE' : 'READY'}</div><div className="updated">{updatedText}</div></div>
+          <div className="livebar">
+  <div className="live">
+    {apiState.mode === 'live'
+      ? 'LIVE'
+      : apiState.mode === 'complete'
+      ? 'COMPLETE'
+      : apiState.mode === 'suspended'
+      ? 'SUSPENDED'
+      : 'READY'}
+  </div>
+  <div className="updated">{updatedText}</div>
+</div>
         </div>
       </div>
 
