@@ -110,8 +110,8 @@ function posLabel(player) {
   const hasTeeTime = player.teeTime && String(player.teeTime).trim();
 
   if (player.position >= 999) {
-    if (hasTeeTime && label !== 'CUT' && label !== 'MC') return '—';
-    return 'MC';
+    if (hasTeeTime && !['CUT', 'MC', 'WD', 'DQ'].includes(label)) return '—';
+    return label || 'MC';
   }
 
   if (player.positionLabel && String(player.positionLabel).trim()) {
@@ -278,9 +278,9 @@ function addPositionLabels(players) {
       return {
         ...p,
         positionLabel:
-          hasTeeTime && existingLabel !== 'CUT' && existingLabel !== 'MC'
+          hasTeeTime && !['CUT', 'MC', 'WD', 'DQ'].includes(existingLabel)
             ? '—'
-            : 'MC'
+            : existingLabel || 'MC'
       };
     }
 
@@ -306,11 +306,18 @@ function isLivePick(p) {
   const label = String(p.positionLabel || '').trim().toUpperCase();
   const hasTeeTime = p.teeTime && String(p.teeTime).trim();
 
-  if (p.position >= 999 && hasTeeTime && label !== 'CUT' && label !== 'MC') {
+  if (
+    p.position >= 999 &&
+    hasTeeTime &&
+    !['CUT', 'MC', 'WD', 'DQ'].includes(label)
+  ) {
     return true;
   }
 
-  return p.position < 999 && posLabel(p) !== 'MC';
+  return (
+    p.position < 999 &&
+    !['MC', 'WD', 'DQ'].includes(posLabel(p).toUpperCase())
+  );
 }
 
 function comparePickSets(a, b) {
@@ -404,7 +411,7 @@ function evaluatePool(entries, players, previousRanks) {
     : evaluated.sort((a,b) => a.originalIndex - b.originalIndex);
 
   const rankedWithStatus = rankEntries(ranked, hasRealScores, previousRanks);
-  const cutHasHappened = players.some(p => p.position >= 999 || posLabel(p) === 'MC');
+  const cutHasHappened = players.some(p => p.position >= 999 || ['MC', 'WD', 'DQ', 'CUT'].includes(posLabel(p).toUpperCase()));
 
   if (!cutHasHappened) return rankedWithStatus;
 
@@ -462,8 +469,17 @@ function isRoundFinished(players) {
   if (!hasStarted) return false;
 
   return players.length > 0 && players.every(p => {
-    const thru = String(p.thru || '').toUpperCase();
-    return posLabel(p) === 'MC' || thru === 'F' || thru === 'F*';
+    const thru = String(p.thru || '').trim().toUpperCase();
+    const label = posLabel(p).toUpperCase();
+
+    return (
+      ['MC', 'WD', 'DQ', 'CUT'].includes(label) ||
+      thru === 'F' ||
+      thru === 'F*' ||
+      thru === '18' ||
+      thru === '-' ||
+      thru === '—'
+    );
   });
 }
 
