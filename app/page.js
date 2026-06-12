@@ -580,14 +580,11 @@ const eliminatedCount = pool.filter(p => p.eliminated).length;
   return (
     <main className="page" style={{ '--hero-image': `url(${tournamentConfig.heroImage})` }}>
       <div className="header">
-        <div className="logo open-logo" aria-label="The Open live logo">
-          <svg className="claret-icon" viewBox="0 0 64 90" role="img" aria-hidden="true">
-            <path d="M23 10h18c0 9-2 16-5 22h8c10 0 15-8 15-17 0-5-2-9-5-12 1 7-2 16-10 19 1-5 2-10 2-16H18c0 6 1 11 2 16C12 19 9 10 10 3 7 6 5 10 5 15c0 9 5 17 15 17h8c-3-6-5-13-5-22Z" />
-            <path d="M25 35h14v28c0 8 4 10 12 12v6H13v-6c8-2 12-4 12-12V35Z" />
-            <path d="M18 82h28v5H18z" />
-          </svg>
-          <div className="open-wordmark"><div>THE</div><h1>OPEN</h1><span>LIVE</span></div>
-        </div>
+        <div className="logo">
+  <h1>US</h1>
+  <div>OPEN</div>
+  <div>LIVE</div>
+</div>
         <div className="title">
           <div className="eyebrow">{tournamentConfig.majorLabel}</div>
           <h2>{tournamentConfig.title}</h2>
