@@ -425,7 +425,11 @@ function evaluatePool(entries, players, previousRanks) {
     : evaluated.sort((a,b) => a.originalIndex - b.originalIndex);
 
   const rankedWithStatus = rankEntries(ranked, hasRealScores, previousRanks);
-  const cutHasHappened = players.some(p => p.position >= 999 || posLabel(p) === 'MC');
+  const cutHasHappened = players.some(
+  p =>
+    p.position >= 999 ||
+    ['MC', 'WD', 'DQ', 'CUT'].includes(posLabel(p).toUpperCase())
+);
 
   if (!cutHasHappened) return rankedWithStatus;
 
