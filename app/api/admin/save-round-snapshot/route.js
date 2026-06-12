@@ -301,7 +301,7 @@ function buildMap(players) {
 }
 
 function isLivePick(p) {
-  if (!p) return false;
+  if (!p || p.pendingPick) return false;
 
   const label = String(p.positionLabel || '').trim().toUpperCase();
   const hasTeeTime = p.teeTime && String(p.teeTime).trim();
