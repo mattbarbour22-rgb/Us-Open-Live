@@ -592,12 +592,16 @@ const eliminatedCount = pool.filter(p => p.eliminated).length;
           <div className="livebar">
   <div className="live">
     {apiState.mode === 'live'
-      ? 'LIVE'
-      : apiState.mode === 'complete'
-      ? 'COMPLETE'
-      : apiState.mode === 'suspended'
-      ? 'SUSPENDED'
-      : 'READY'}
+  ? 'LIVE'
+  : apiState.mode === 'complete'
+  ? 'COMPLETE'
+  : apiState.mode === 'suspended'
+  ? 'SUSPENDED'
+  : apiState.mode === 'break'
+  ? 'BREAK'
+  : apiState.mode === 'playoff'
+  ? 'PLAYOFF'
+  : 'READY'}
   </div>
   <div className="updated">{updatedText}</div>
 </div>
