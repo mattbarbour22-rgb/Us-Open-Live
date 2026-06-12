@@ -608,7 +608,7 @@ const eliminatedCount = pool.filter(p => p.eliminated).length;
 
       <div className="grid">
         <section className={`panel ${golfExpanded ? 'expanded' : ''}`}>
-          <div className="panel-title">The Open Live Leaderboard</div>
+          <div className="panel-title">U.S Open Live Leaderboard</div>
           <table>
             <thead><tr><th>Pos</th><th>Player</th><th>Total</th><th>Thru</th><th>Today</th></tr></thead>
             <tbody>
@@ -621,7 +621,7 @@ const eliminatedCount = pool.filter(p => p.eliminated).length;
               ))}
             </tbody>
           </table>
-          <button className="footer-btn" onClick={() => setGolfExpanded(!golfExpanded)}>{golfExpanded ? 'COLLAPSE THE OPEN LEADERBOARD ▲' : 'FULL THE OPEN LEADERBOARD ▶'}</button>
+          <button className="footer-btn" onClick={() => setGolfExpanded(!golfExpanded)}>{golfExpanded ? 'COLLAPSE U.S OPEN LEADERBOARD ▲' : 'FULL U.S OPEN LEADERBOARD ▶'}</button>
         </section>
 
         <div>
