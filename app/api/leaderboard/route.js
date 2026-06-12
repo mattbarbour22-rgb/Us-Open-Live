@@ -155,31 +155,56 @@ export async function GET() {
       null;
 
     const currentRoundId = roundIdNumber(payload?.roundId);
-    const leaders = players.filter(p => Number(p.position) === 1);
+const leaders = players.filter(p => Number(p.position) === 1);
 
-    let mode = 'ready';
+const status = String(payload?.status || '').toLowerCase();
+const roundStatus = String(payload?.roundStatus || '').toLowerCase();
 
-    if (
-      playoff &&
-      currentRoundId === 4 &&
-      leaders.length > 1 &&
-      String(payload?.status || '').toLowerCase() !== 'official' &&
-      String(payload?.roundStatus || '').toLowerCase() !== 'official'
-    ) {
-      mode = 'playoff';
-    } else if (String(payload?.roundStatus || '').toLowerCase() === 'suspended') {
-      mode = 'suspended';
-    } else if (
-      String(payload?.status || '').toLowerCase() === 'official' ||
-      String(payload?.roundStatus || '').toLowerCase() === 'official'
-    ) {
-      mode = 'complete';
-    } else if (players.length) {
-      mode = 'live';
-    } else {
-      mode = 'no-players';
-    }
+const isOfficial =
+  status === 'official' ||
+  roundStatus === 'official';
 
+const isSuspended =
+  status.includes('suspend') ||
+  roundStatus.includes('suspend') ||
+  status.includes('delay') ||
+  roundStatus.includes('delay');
+
+const isPlayoff =
+  currentRoundId === 4 &&
+  !isOfficial &&
+  leaders.length > 1 &&
+  (
+    playoff === true ||
+    status.includes('playoff') ||
+    roundStatus.includes('playoff')
+  );
+
+const isBreak =
+  currentRoundId >= 1 &&
+  currentRoundId <= 3 &&
+  players.length > 0 &&
+  !isOfficial &&
+  (
+    roundStatus.includes('complete') ||
+    status.includes('round complete')
+  );
+
+let mode = 'ready';
+
+if (isPlayoff) {
+  mode = 'playoff';
+} else if (isSuspended) {
+  mode = 'suspended';
+} else if (isOfficial && currentRoundId === 4) {
+  mode = 'complete';
+} else if (isBreak) {
+  mode = 'break';
+} else if (players.length) {
+  mode = 'live';
+} else {
+  mode = 'ready';
+}
     return Response.json({
       mode,
       status: payload?.status || '',
