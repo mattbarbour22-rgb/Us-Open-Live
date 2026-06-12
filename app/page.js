@@ -92,6 +92,7 @@ function keyName(name) {
 }
 
 function scoreLabel(score) {
+  if (score === 998) return '—';
   if (score === 999) return 'MC';
   const n = Number(score);
   if (!Number.isFinite(n) || n === 0) return 'E';
@@ -99,7 +100,7 @@ function scoreLabel(score) {
 }
 
 function posLabel(player) {
-  if (!player) return '—';
+  if (!player || player.pendingPick) return '—';
 
   const label = String(player.positionLabel || '').trim().toUpperCase();
   const hasTeeTime = player.teeTime && String(player.teeTime).trim();
@@ -296,8 +297,8 @@ function buildMap(players) {
 }
 
 function isLivePick(p) {
-  if (!p) return false;
-
+  if (!p || p.pendingPick) return false;
+  
   const label = String(p.positionLabel || '').trim().toUpperCase();
   const hasTeeTime = p.teeTime && String(p.teeTime).trim();
 
@@ -318,6 +319,8 @@ function comparePickSets(a, b) {
 }
 
 function isDominated(entry, allEntries) {
+  if (entry.sortedPicks.every(p => p.pendingPick)) return false;
+
   const livePicks = entry.sortedPicks.filter(isLivePick);
 
   if (livePicks.length === 0) return true;
@@ -371,14 +374,30 @@ function evaluatePool(entries, players, previousRanks) {
   const hasRealScores = players.some(p => p.thru && !String(p.thru).toLowerCase().includes('tee'));
 
   const evaluated = entries.map((entry, originalIndex) => {
-    const picks = entry.picks.map(pick => map.get(keyName(pick)) || {
-      name: pick,
-      position: 999,
-      positionLabel: 'NS',
-      score: 999,
+    const picks = entry.picks.map(pick => {
+  const cleanPick = String(pick || '').trim();
+
+  if (!cleanPick || cleanPick === '-') {
+    return {
+      name: '-',
+      position: 998,
+      positionLabel: '—',
+      score: 998,
       today: '',
-      thru: 'Not Started'
-    });
+      thru: '-',
+      pendingPick: true
+    };
+  }
+
+  return map.get(keyName(cleanPick)) || {
+    name: cleanPick,
+    position: 999,
+    positionLabel: 'NS',
+    score: 999,
+    today: '',
+    thru: 'Not Started'
+  };
+});
 
     const sortedPicks = [...picks].sort((a,b) => {
       if ((a.position ?? 999) !== (b.position ?? 999)) return (a.position ?? 999) - (b.position ?? 999);
@@ -403,16 +422,22 @@ function evaluatePool(entries, players, previousRanks) {
 
   if (!cutHasHappened) return rankedWithStatus;
 
-  const aliveRaw = rankedWithStatus.filter(entry => !isDominated(entry, rankedWithStatus));
+  const hasSubmittedPicks = entry =>
+    entry.sortedPicks.some(p => !p.pendingPick);
+
+  const aliveRaw = rankedWithStatus.filter(entry =>
+    !hasSubmittedPicks(entry) || !isDominated(entry, rankedWithStatus)
+  );
+
   const alive = rankEntries(aliveRaw, hasRealScores, previousRanks);
 
   const eliminated = rankedWithStatus
-  .filter(entry => isDominated(entry, rankedWithStatus))
+  .filter(entry => hasSubmittedPicks(entry) && isDominated(entry, rankedWithStatus))
   .map(entry => {
 
     const livePicks = entry.sortedPicks.filter(isLivePick);
 
-    let eliminationReason = 'ALL MC';
+    let eliminationReason = livePicks.length === 0 ? 'ALL MC' : 'COVERED';
 
     if (livePicks.length > 0) {
 
@@ -421,9 +446,13 @@ function evaluatePool(entries, players, previousRanks) {
 
         const otherLive = other.sortedPicks.filter(isLivePick);
 
-        return livePicks.every(lp =>
+        const coversAllLivePicks = livePicks.every(lp =>
           otherLive.some(op => keyName(op.name) === keyName(lp.name))
-        ) && comparePickSets(otherLive, livePicks) < 0;
+        );
+
+        if (!coversAllLivePicks) return false;
+
+        return comparePickSets(other.sortedPicks, entry.sortedPicks) < 0;
       });
 
       if (coveringEntry) {
@@ -459,7 +488,7 @@ const [poolStateLoaded, setPoolStateLoaded] = useState(false);
 
 async function loadLeaderboard() {
   try {
-    const res = await fetch('/api/leaderboard');
+    const res = await fetch('/api/leaderboard', { cache: 'no-store' });
     const data = await res.json();
     setApiState(data);
   } catch (err) {
@@ -483,9 +512,9 @@ useEffect(() => {
 useEffect(() => {
   async function loadPoolState() {
     try {
-      const data = await fetch('/api/pool-state').then(r => r.json());
+      const data = await fetch('/api/pool-state', { cache: 'no-store' }).then(r => r.json());
 
-setMovementRanks(data.current_ranks || {});
+      setMovementRanks(data.current_ranks || data.previous_ranks || {});
       setPoolStateLoaded(true);
     } catch {
       setMovementRanks({});
@@ -532,52 +561,6 @@ const updatedText = apiState.updatedAt
 
 const tournamentStarted = players.some(p => p.position < 999);
 
-const playersOnCourse = players.some(p => {
-  const thru = String(p.thru || '').trim().toUpperCase();
-
-  return (
-    thru &&
-    thru !== 'F' &&
-    thru !== 'F*' &&
-    thru !== 'MC' &&
-    thru !== 'CUT' &&
-    thru !== 'WD' &&
-    thru !== '-' &&
-    !thru.includes('TEE')
-  );
-});
-
-const allFinished =
-  players.length > 0 &&
-  players.every(p => {
-    const thru = String(p.thru || '').trim().toUpperCase();
-    const label = String(p.positionLabel || '').trim().toUpperCase();
-
-    return (
-      thru === 'F' ||
-      thru === 'F*' ||
-      thru === 'MC' ||
-      thru === 'CUT' ||
-      thru === 'WD' ||
-      label === 'MC' ||
-      label === 'CUT' ||
-      label === 'WD'
-    );
-  });
-
-const liveStatusLabel =
-  apiState.mode === 'playoff'
-    ? 'PLAYOFF'
-    : apiState.mode === 'suspended'
-      ? 'SUSPENDED'
-      : apiState.mode === 'complete'
-        ? 'COMPLETE'
-        : playersOnCourse
-          ? 'LIVE'
-          : allFinished
-            ? 'COMPLETE'
-            : 'READY';
-
 const golfLeaderNames = tournamentStarted
   ? players
       .filter(p => p.position === players[0]?.position && p.position < 999)
@@ -597,15 +580,19 @@ const eliminatedCount = pool.filter(p => p.eliminated).length;
   return (
     <main className="page" style={{ '--hero-image': `url(${tournamentConfig.heroImage})` }}>
       <div className="header">
-        <div className="logo"><h1>US</h1><div>OPEN</div><div>LIVE</div></div>
+        <div className="logo open-logo" aria-label="The Open live logo">
+          <svg className="claret-icon" viewBox="0 0 64 90" role="img" aria-hidden="true">
+            <path d="M23 10h18c0 9-2 16-5 22h8c10 0 15-8 15-17 0-5-2-9-5-12 1 7-2 16-10 19 1-5 2-10 2-16H18c0 6 1 11 2 16C12 19 9 10 10 3 7 6 5 10 5 15c0 9 5 17 15 17h8c-3-6-5-13-5-22Z" />
+            <path d="M25 35h14v28c0 8 4 10 12 12v6H13v-6c8-2 12-4 12-12V35Z" />
+            <path d="M18 82h28v5H18z" />
+          </svg>
+          <div className="open-wordmark"><div>THE</div><h1>OPEN</h1><span>LIVE</span></div>
+        </div>
         <div className="title">
           <div className="eyebrow">{tournamentConfig.majorLabel}</div>
           <h2>{tournamentConfig.title}</h2>
           <div className="subtitle">{tournamentConfig.venue} • {tournamentConfig.location} • {tournamentConfig.dates}</div>
-          <div className="livebar">
-  <div className="live">{liveStatusLabel}</div>
-  <div className="updated">{updatedText}</div>
-</div>
+          <div className="livebar"><div className="live">{apiState.mode === 'live' ? 'LIVE' : 'READY'}</div><div className="updated">{updatedText}</div></div>
         </div>
       </div>
 
@@ -613,7 +600,7 @@ const eliminatedCount = pool.filter(p => p.eliminated).length;
 
       <div className="grid">
         <section className={`panel ${golfExpanded ? 'expanded' : ''}`}>
-          <div className="panel-title">U.S. Open Live Leaderboard</div>
+          <div className="panel-title">The Open Live Leaderboard</div>
           <table>
             <thead><tr><th>Pos</th><th>Player</th><th>Total</th><th>Thru</th><th>Today</th></tr></thead>
             <tbody>
@@ -626,7 +613,7 @@ const eliminatedCount = pool.filter(p => p.eliminated).length;
               ))}
             </tbody>
           </table>
-          <button className="footer-btn" onClick={() => setGolfExpanded(!golfExpanded)}>{golfExpanded ? 'COLLAPSE U.S. OPEN LEADERBOARD ▲' : 'FULL U.S. OPEN LEADERBOARD ▶'}</button>
+          <button className="footer-btn" onClick={() => setGolfExpanded(!golfExpanded)}>{golfExpanded ? 'COLLAPSE THE OPEN LEADERBOARD ▲' : 'FULL THE OPEN LEADERBOARD ▶'}</button>
         </section>
 
         <div>
@@ -679,12 +666,10 @@ const eliminatedCount = pool.filter(p => p.eliminated).length;
         </div>
       </div>
 
-      <div className="note">Live rankings are decided by best current golf position, then next best and third pick.
-
-Leaderboard standings are updated approximately every 30 minutes during the first three rounds and every 5 minutes during the final round.
+      <div className="note">Live rankings are decided by best current golf position, then next best and third pick. Leaderboard standings are updated approximately every 30 minutes during the first three rounds and every 5 minutes during the final round.
 
 Results are unofficial until verified by Jonesy.
- </div>
+</div>
     </main>
   );
 }
