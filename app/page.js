@@ -106,9 +106,9 @@ function posLabel(player) {
   const hasTeeTime = player.teeTime && String(player.teeTime).trim();
 
   if (player.position >= 999) {
-  if (hasTeeTime && !['CUT', 'MC', 'WD', 'DQ'].includes(label)) return '—';
-  return label || 'MC';
-}
+    if (hasTeeTime && !['CUT', 'MC', 'WD', 'DQ'].includes(label)) return '—';
+    return label || 'MC';
+  }
 
   if (player.positionLabel && String(player.positionLabel).trim()) {
     return String(player.positionLabel);
@@ -270,15 +270,15 @@ function addPositionLabels(players) {
     const hasTeeTime = p.teeTime && String(p.teeTime).trim();
     const existingLabel = String(p.positionLabel || '').trim().toUpperCase();
 
-  if (p.position >= 999) {
-  return {
-    ...p,
-    positionLabel:
-      hasTeeTime && !['CUT', 'MC', 'WD', 'DQ'].includes(existingLabel)
-        ? '—'
-        : existingLabel || 'MC'
-  };
-}
+    if (p.position >= 999) {
+      return {
+        ...p,
+        positionLabel:
+          hasTeeTime && !['CUT', 'MC', 'WD', 'DQ'].includes(existingLabel)
+            ? '—'
+            : existingLabel || 'MC'
+      };
+    }
 
     return {
       ...p,
@@ -298,22 +298,23 @@ function buildMap(players) {
 
 function isLivePick(p) {
   if (!p || p.pendingPick) return false;
-  
+
   const label = String(p.positionLabel || '').trim().toUpperCase();
   const hasTeeTime = p.teeTime && String(p.teeTime).trim();
 
   if (
-  p.position >= 999 &&
-  hasTeeTime &&
-  !['CUT', 'MC', 'WD', 'DQ'].includes(label)
-) {
-  return true;
-}
+    p.position >= 999 &&
+    hasTeeTime &&
+    !['CUT', 'MC', 'WD', 'DQ'].includes(label)
+  ) {
+    return true;
+  }
 
-return (
-  p.position < 999 &&
-  !['MC', 'WD', 'DQ'].includes(posLabel(p).toUpperCase())
-);
+  return (
+    p.position < 999 &&
+    !['MC', 'WD', 'DQ'].includes(posLabel(p).toUpperCase())
+  );
+}
 
 function comparePickSets(a, b) {
   for (let i = 0; i < 3; i++) {
