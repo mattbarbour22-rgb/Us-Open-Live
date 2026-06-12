@@ -1,8 +1,9 @@
-// Manual API cache control. Change this one number when you want faster/slower updates.
-// Next.js uses SECONDS here: 300 = 5 min, 900 = 15 min, 1800 = 30 min, 3600 = 1 hour.
-export const revalidate = 9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999;
+// Manual API cache control.
+// For live testing, keep this dynamic so the status button updates properly.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
-const TOURN_ID = process.env.SLASH_GOLF_TOURN_ID || '023';
+const TOURN_ID = process.env.SLASH_GOLF_TOURN_ID || '032';
 const YEAR = process.env.SLASH_GOLF_YEAR || '2026';
 const ORG_ID = process.env.SLASH_GOLF_ORG_ID || '1';
 
@@ -114,6 +115,7 @@ export async function GET() {
         'x-rapidapi-key': key,
         'x-rapidapi-host': host,
       },
+      cache: 'no-store',
     });
 
     const text = await res.text();
@@ -155,56 +157,79 @@ export async function GET() {
       null;
 
     const currentRoundId = roundIdNumber(payload?.roundId);
-const leaders = players.filter(p => Number(p.position) === 1);
+    const leaders = players.filter(p => Number(p.position) === 1);
 
-const status = String(payload?.status || '').toLowerCase();
-const roundStatus = String(payload?.roundStatus || '').toLowerCase();
+    const status = String(payload?.status || '').toLowerCase();
+    const roundStatus = String(payload?.roundStatus || '').toLowerCase();
 
-const isOfficial =
-  status === 'official' ||
-  roundStatus === 'official';
+    const isTournamentOfficial =
+      status === 'official';
 
-const isSuspended =
-  status.includes('suspend') ||
-  roundStatus.includes('suspend') ||
-  status.includes('delay') ||
-  roundStatus.includes('delay');
+    const isRoundOfficial =
+      roundStatus === 'official';
 
-const isPlayoff =
-  currentRoundId === 4 &&
-  !isOfficial &&
-  leaders.length > 1 &&
-  (
-    playoff === true ||
-    status.includes('playoff') ||
-    roundStatus.includes('playoff')
-  );
+    const isSuspended =
+      status.includes('suspend') ||
+      roundStatus.includes('suspend') ||
+      status.includes('delay') ||
+      roundStatus.includes('delay');
 
-const isBreak =
-  currentRoundId >= 1 &&
-  currentRoundId <= 3 &&
-  players.length > 0 &&
-  !isOfficial &&
-  (
-    roundStatus.includes('complete') ||
-    status.includes('round complete')
-  );
+    const isPlayoff =
+      currentRoundId === 4 &&
+      !isTournamentOfficial &&
+      leaders.length > 1 &&
+      (
+        playoff === true ||
+        status.includes('playoff') ||
+        roundStatus.includes('playoff')
+      );
 
-let mode = 'ready';
+    const isPlayingNow = p => {
+      const thru = String(p.thru || '').trim().toUpperCase();
 
-if (isPlayoff) {
-  mode = 'playoff';
-} else if (isSuspended) {
-  mode = 'suspended';
-} else if (isOfficial && currentRoundId === 4) {
-  mode = 'complete';
-} else if (isBreak) {
-  mode = 'break';
-} else if (players.length) {
-  mode = 'live';
-} else {
-  mode = 'ready';
-}
+      return (
+        thru &&
+        thru !== '-' &&
+        thru !== '—' &&
+        thru !== 'F' &&
+        thru !== 'F*' &&
+        thru !== '18' &&
+        thru !== 'MC' &&
+        thru !== 'CUT' &&
+        thru !== 'WD' &&
+        thru !== 'DQ' &&
+        !thru.includes('TEE')
+      );
+    };
+
+    const anyPlayerPlayingNow = players.some(isPlayingNow);
+
+    const isBreak =
+      currentRoundId >= 1 &&
+      currentRoundId <= 3 &&
+      players.length > 0 &&
+      !isSuspended &&
+      (
+        isRoundOfficial ||
+        !anyPlayerPlayingNow
+      );
+
+    let mode = 'ready';
+
+    if (isPlayoff) {
+      mode = 'playoff';
+    } else if (isSuspended) {
+      mode = 'suspended';
+    } else if (isTournamentOfficial && currentRoundId === 4) {
+      mode = 'complete';
+    } else if (isBreak) {
+      mode = 'break';
+    } else if (players.length) {
+      mode = 'live';
+    } else {
+      mode = 'ready';
+    }
+
     return Response.json({
       mode,
       status: payload?.status || '',
