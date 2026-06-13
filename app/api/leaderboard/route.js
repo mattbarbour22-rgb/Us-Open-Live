@@ -1,6 +1,6 @@
 // Manual API cache control. Change this one number when you want faster/slower updates.
 // Next.js uses SECONDS here: 300 = 5 min, 900 = 15 min, 1800 = 30 min, 3600 = 1 hour.
-export const revalidate = 9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999;
+export const revalidate = 300;
 
 const TOURN_ID = process.env.SLASH_GOLF_TOURN_ID || '026';
 const YEAR = process.env.SLASH_GOLF_YEAR || '2026';
@@ -93,6 +93,60 @@ function roundIdNumber(roundId) {
   return Number(roundId);
 }
 
+function isWithdrawnOrCutLabel(label) {
+  const s = String(label || '').trim().toUpperCase();
+  return ['CUT', 'MC', 'WD', 'DQ'].includes(s);
+}
+
+function applyRoundTwoCut(players, payload) {
+  const roundId = roundIdNumber(payload?.roundId);
+  const roundStatus = String(payload?.roundStatus || '').toLowerCase();
+
+  // Only force the cut after Round 2 has officially finished.
+  // Before that, everyone should remain live.
+  if (roundId !== 2 || roundStatus !== 'official') return players;
+
+  const activePositions = players
+    .filter(p => Number(p.position) < 999)
+    .map(p => Number(p.position))
+    .filter(Number.isFinite);
+
+  if (!activePositions.length) return players;
+
+  // Standard PGA-style cut is top 65 and ties.
+  // Example: if positions are 1,2,2,...,61,61,76, the cut position becomes 61.
+  const cutPosition =
+    Math.max(...activePositions.filter(pos => pos <= 65)) || 65;
+
+  return players.map(p => {
+    const label = String(p.positionLabel || '').trim().toUpperCase();
+
+    // Preserve WD/DQ/CUT/MC if the API already says so.
+    if (isWithdrawnOrCutLabel(label)) {
+      return {
+        ...p,
+        position: 999,
+        positionLabel: label === 'CUT' ? 'MC' : label,
+        score: 999,
+        thru: p.thru || '-'
+      };
+    }
+
+    if (Number(p.position) > cutPosition) {
+      return {
+        ...p,
+        position: 999,
+        positionLabel: 'MC',
+        score: 999,
+        thru: 'MC'
+      };
+    }
+
+    return p;
+  });
+}
+
+
 export async function GET() {
   const key = process.env.SLASH_GOLF_API_KEY;
   const host = process.env.SLASH_GOLF_API_HOST || 'live-golf-data.p.rapidapi.com';
@@ -145,9 +199,11 @@ export async function GET() {
     }
 
     const raw = getArray(payload);
-    const players = Array.isArray(raw)
+    let players = Array.isArray(raw)
       ? raw.map(normalize).filter(p => p.name)
       : [];
+
+    players = applyRoundTwoCut(players, payload);
 
     const playoff =
       payload?.playoff ||
