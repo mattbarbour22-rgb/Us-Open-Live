@@ -326,8 +326,6 @@ function comparePickSets(a, b) {
 }
 
 function isDominated(entry, allEntries) {
-  if (entry.sortedPicks.every(p => p.pendingPick)) return false;
-
   const livePicks = entry.sortedPicks.filter(isLivePick);
 
   if (livePicks.length === 0) return true;
@@ -433,17 +431,11 @@ function evaluatePool(entries, players, previousRanks) {
 
   if (!cutHasHappened) return rankedWithStatus;
 
-  const hasSubmittedPicks = entry =>
-    entry.sortedPicks.some(p => !p.pendingPick);
-
-  const aliveRaw = rankedWithStatus.filter(entry =>
-    !hasSubmittedPicks(entry) || !isDominated(entry, rankedWithStatus)
-  );
-
+  const aliveRaw = rankedWithStatus.filter(entry => !isDominated(entry, rankedWithStatus));
   const alive = rankEntries(aliveRaw, hasRealScores, previousRanks);
 
   const eliminated = rankedWithStatus
-  .filter(entry => hasSubmittedPicks(entry) && isDominated(entry, rankedWithStatus))
+  .filter(entry => isDominated(entry, rankedWithStatus))
   .map(entry => {
 
     const livePicks = entry.sortedPicks.filter(isLivePick);
