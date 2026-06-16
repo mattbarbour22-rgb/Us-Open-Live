@@ -91,6 +91,7 @@ export const poolEntries = [
   { player: 'John Edge', picks: ['', '', ''] },
   { player: 'Trent W', picks: ['', '', ''] },
   { player: 'Sir Steve', picks: ['', '', ''] },
+
+  // Extra entrant (71st)
   { player: 'Nat', picks: ['', '', ''] }
-  { player: 'Up the Wahs', picks: ['', '', ''] }
 ];
