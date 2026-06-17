@@ -602,18 +602,41 @@ const eliminatedCount = pool.filter(p => p.eliminated).length;
           <div className="subtitle">{tournamentConfig.venue} • {tournamentConfig.location} • {tournamentConfig.dates}</div>
           <div className="livebar">
   <div className="live">
-    {apiState.mode === 'live'
-  ? 'LIVE'
-  : apiState.mode === 'complete'
-  ? 'COMPLETE'
-  : apiState.mode === 'suspended'
-  ? 'SUSPENDED'
-  : apiState.mode === 'break'
-  ? 'BREAK'
-  : apiState.mode === 'playoff'
-  ? 'PLAYOFF'
-  : 'READY'}
-  </div>
+  {(() => {
+    const roundIdNumber = Number(
+      apiState.roundId?.$numberInt ??
+      apiState.roundId ??
+      0
+    );
+
+    const allFinished =
+      players.length > 0 &&
+      players.every(p => {
+        const thru = String(p.thru || '').toUpperCase();
+        const label = posLabel(p).toUpperCase();
+
+        return (
+          thru === 'F' ||
+          thru === 'F*' ||
+          ['MC', 'CUT', 'WD', 'DQ'].includes(label)
+        );
+      });
+
+    const isBreak =
+      players.length > 0 &&
+      allFinished &&
+      roundIdNumber > 0 &&
+      roundIdNumber < 4;
+
+    if (apiState.mode === 'suspended') return 'SUSPENDED';
+    if (apiState.mode === 'playoff') return 'PLAYOFF';
+    if (apiState.mode === 'complete' && roundIdNumber >= 4) return 'COMPLETE';
+    if (isBreak) return 'BREAK';
+    if (apiState.mode === 'live') return 'LIVE';
+
+    return 'READY';
+  })()}
+</div>
   <div className="updated">{updatedText}</div>
 </div>
         </div>
