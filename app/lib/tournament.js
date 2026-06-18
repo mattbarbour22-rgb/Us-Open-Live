@@ -8,7 +8,7 @@ export const tournamentConfig = {
   venue: 'Shinnecock Hills Golf Club',
   location: 'Southampton, New York',
   dates: 'June 18–21, 2026',
-  prizePool: '$3,600',
+  prizePool: '$3,625',
   tournamentTimezone: 'America/New_York',
   jackpotRule: 'To win, your picks must include the U.S. Open Champion. If no punter selects them, the prize pool jackpots again.',
   heroImage: 'https://images.unsplash.com/photo-1500932334442-8761ee4810a7?auto=format&fit=crop&w=2400&q=80'
