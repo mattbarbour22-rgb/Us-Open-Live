@@ -712,7 +712,7 @@ const eliminatedCount = pool.filter(p => p.eliminated).length;
         </div>
       </div>
 
-      <div className="note">Live rankings are decided by best current golf position, then next best and third pick. Leaderboard standings are updated approximately every 30 minutes during the first three rounds and every 5 minutes during the final round.
+      <div className="note">Live rankings are decided by best current golf position, then next best and third pick. Leaderboard standings are updated approximately every 15 minutes during the first three rounds and every 5 minutes during the final round.
 
 Results are unofficial until verified by Jonesy.
 </div>
